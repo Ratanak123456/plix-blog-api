@@ -1,0 +1,39 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: blog
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+  datasource:
+    url: jdbc:postgresql://localhost:5432/db_blog
+    username: postgres
+    password: qwer
+    driver-class-name: org.postgresql.Driver
+  mail:
+    host: localhost
+    port: 1025
+    username: no-reply@blog.local
+    password:
+    properties:
+      mail:
+        smtp:
+          auth: false
+          starttls:
+            enable: false
+
+  open-in-view: false
+
+jwt:
+  secret: VGhpc0lzQURldmVsb3BtZW50S2V5Rm9yQmxvZ0FwcGxpY2F0aW9uMTIzNDU2Nzg5MDEyMzQ=
+  expiration: 86400000
+  refresh-expiration: 604800000
+
+app:
+  frontend-url: http://localhost:3000
