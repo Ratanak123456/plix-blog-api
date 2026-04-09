@@ -14,6 +14,8 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.UUID;
+
 @RestController
 @RequestMapping("/api/v1")
 @RequiredArgsConstructor
@@ -23,23 +25,31 @@ public class CommentController {
 
     @PostMapping("/posts/{postId}/comments")
     public ResponseEntity<CommentResponse> addComment(
-            @PathVariable Long postId,
+            @PathVariable UUID postId,
             @Valid @RequestBody CommentRequest request,
             @AuthenticationPrincipal UserDetails userDetails) {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(commentService.addComment(postId, request, userDetails.getUsername()));
     }
 
+    @PutMapping("/comments/{commentId}")
+    public ResponseEntity<CommentResponse> updateComment(
+            @PathVariable UUID commentId,
+            @Valid @RequestBody CommentRequest request,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        return ResponseEntity.ok(commentService.updateComment(commentId, request, userDetails.getUsername()));
+    }
+
     @GetMapping("/posts/{postId}/comments")
     public ResponseEntity<Page<CommentResponse>> getComments(
-            @PathVariable Long postId,
+            @PathVariable UUID postId,
             @PageableDefault(size = 10) Pageable pageable) {
         return ResponseEntity.ok(commentService.getCommentsByPost(postId, pageable));
     }
 
     @DeleteMapping("/comments/{commentId}")
     public ResponseEntity<Void> deleteComment(
-            @PathVariable Long commentId,
+            @PathVariable UUID commentId,
             @AuthenticationPrincipal UserDetails userDetails) {
         commentService.deleteComment(commentId, userDetails.getUsername());
         return ResponseEntity.noContent().build();
@@ -47,7 +57,7 @@ public class CommentController {
 
     @PostMapping("/comments/{commentId}/like")
     public ResponseEntity<CommentResponse> likeComment(
-            @PathVariable Long commentId,
+            @PathVariable UUID commentId,
             @AuthenticationPrincipal UserDetails userDetails) {
         return ResponseEntity.ok(commentService.likeComment(commentId, userDetails.getUsername()));
     }

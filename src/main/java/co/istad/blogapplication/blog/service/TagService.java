@@ -5,11 +5,11 @@ import co.istad.blogapplication.blog.dto.request.TagRequest;
 import co.istad.blogapplication.blog.dto.response.TagResponse;
 
 import java.util.List;
+import java.util.UUID;
 
 public interface TagService {
-    TagResponse createTag(TagRequest request);
-    TagResponse updateTag(Long id, TagRequest request);
-    void deleteTag(Long id);
+    TagResponse createTag(TagRequest request, String username);
+    void deleteTag(UUID id, String username);
     List<TagResponse> getAllTags();
-    TagResponse getTagById(Long id);
+    TagResponse getTagById(UUID id);
 }

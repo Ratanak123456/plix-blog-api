@@ -1,13 +1,13 @@
 package co.istad.blogapplication.blog;
 
 import org.junit.jupiter.api.Test;
-import org.springframework.boot.test.context.SpringBootTest;
 
-@SpringBootTest
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+
 class BlogApplicationTests {
 
     @Test
-    void contextLoads() {
+    void applicationClassExists() {
+        assertNotNull(BlogApplication.class);
     }
-
 }

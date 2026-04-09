@@ -3,6 +3,8 @@ package co.istad.blogapplication.blog.service.impl;
 import co.istad.blogapplication.blog.dto.request.CommentRequest;
 import co.istad.blogapplication.blog.dto.response.CommentResponse;
 import co.istad.blogapplication.blog.entity.*;
+import co.istad.blogapplication.blog.exception.ForbiddenException;
+import co.istad.blogapplication.blog.exception.NotFoundException;
 import co.istad.blogapplication.blog.repository.*;
 import co.istad.blogapplication.blog.service.CommentService;
 import lombok.RequiredArgsConstructor;
@@ -12,7 +14,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -27,10 +31,10 @@ public class CommentServiceImpl implements CommentService {
 
     @Override
     @Transactional
-    public CommentResponse addComment(Long postId, CommentRequest request, String email) {
-        User user = getUser(email);
+    public CommentResponse addComment(UUID postId, CommentRequest request, String username) {
+        User user = getUser(username);
         Post post = postRepository.findById(postId)
-                .orElseThrow(() -> new RuntimeException("Post not found"));
+                .orElseThrow(() -> new NotFoundException("Post not found"));
 
         Comment comment = Comment.builder()
                 .content(request.getContent())
@@ -40,42 +44,59 @@ public class CommentServiceImpl implements CommentService {
 
         if (request.getParentId() != null) {
             Comment parent = commentRepository.findById(request.getParentId())
-                    .orElseThrow(() -> new RuntimeException("Parent comment not found"));
+                    .orElseThrow(() -> new NotFoundException("Parent comment not found"));
             comment.setParent(parent);
         }
 
         Comment saved = commentRepository.save(comment);
-        return mapToResponse(saved, email);
+        return mapToResponse(saved, username);
     }
 
     @Override
     @Transactional
-    public void deleteComment(Long commentId, String email) {
-        User user = getUser(email);
+    public CommentResponse updateComment(UUID commentId, CommentRequest request, String username) {
+        User user = getUser(username);
         Comment comment = commentRepository.findById(commentId)
-                .orElseThrow(() -> new RuntimeException("Comment not found"));
+                .orElseThrow(() -> new NotFoundException("Comment not found"));
 
         if (!comment.getUser().getId().equals(user.getId()) && user.getRole() != User.Role.ADMIN) {
-            throw new RuntimeException("You are not authorized to delete this comment");
+            throw new ForbiddenException("You are not authorized to update this comment");
         }
 
-        commentRepository.delete(comment);
+        comment.setContent(request.getContent());
+        return mapToResponse(commentRepository.save(comment), username);
     }
 
     @Override
-    public Page<CommentResponse> getCommentsByPost(Long postId, Pageable pageable) {
+    @Transactional
+    public void deleteComment(UUID commentId, String username) {
+        User user = getUser(username);
+        Comment comment = commentRepository.findById(commentId)
+                .orElseThrow(() -> new NotFoundException("Comment not found"));
+
+        if (!comment.getUser().getId().equals(user.getId()) && user.getRole() != User.Role.ADMIN) {
+            throw new ForbiddenException("You are not authorized to delete this comment");
+        }
+
+        // Soft delete to trigger trg_comments_sync in DB
+        comment.setDeletedAt(LocalDateTime.now());
+        commentRepository.save(comment);
+    }
+
+    @Override
+    public Page<CommentResponse> getCommentsByPost(UUID postId, Pageable pageable) {
         Post post = postRepository.findById(postId)
-                .orElseThrow(() -> new RuntimeException("Post not found"));
+                .orElseThrow(() -> new NotFoundException("Post not found"));
         return commentRepository.findByPostAndParentIsNull(post, pageable)
                 .map(comment -> mapToResponse(comment, null));
     }
 
     @Override
     @Transactional
-    public CommentResponse likeComment(Long commentId, String email) {
-        User user = getUser(email);
+    public CommentResponse likeComment(UUID commentId, String username) {
+        User user = getUser(username);
         Comment comment = commentRepository.findById(commentId)
-                .orElseThrow(() -> new RuntimeException("Comment not found"));
+                .orElseThrow(() -> new NotFoundException("Comment not found"));
 
         commentLikeRepository.findByUserAndComment(user, comment).ifPresentOrElse(
                 like -> commentLikeRepository.delete(like),
@@ -84,15 +105,15 @@ public class CommentServiceImpl implements CommentService {
                 )
         );
 
-        return mapToResponse(comment, email);
+        return mapToResponse(comment, username);
     }
 
-    private User getUser(String email) {
-        return userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+    private User getUser(String username) {
+        return userRepository.findByUsernameAndIsDeletedFalse(username)
+                .orElseThrow(() -> new NotFoundException("User not found"));
     }
 
-    private CommentResponse mapToResponse(Comment comment, String currentUserEmail) {
+    private CommentResponse mapToResponse(Comment comment, String currentUsername) {
         CommentResponse response = modelMapper.map(comment, CommentResponse.class);
         response.setLikeCount(commentLikeRepository.countByComment(comment));
 
@@ -102,12 +123,12 @@ public class CommentServiceImpl implements CommentService {
 
         List<CommentResponse> replies = commentRepository.findByParentId(comment.getId())
                 .stream()
-                .map(reply -> mapToResponse(reply, currentUserEmail))
+                .map(reply -> mapToResponse(reply, currentUsername))
                 .collect(Collectors.toList());
         response.setReplies(replies);
 
-        if (currentUserEmail != null) {
-            userRepository.findByEmail(currentUserEmail).ifPresent(user ->
+        if (currentUsername != null) {
+            userRepository.findByUsernameAndIsDeletedFalse(currentUsername).ifPresent(user ->
                     response.setLikedByCurrentUser(commentLikeRepository.existsByUserAndComment(user, comment))
             );
         }

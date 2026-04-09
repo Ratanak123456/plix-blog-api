@@ -1,0 +1,1390 @@
+{
+  "info": {
+    "_postman_id": "a9b8c7d6-e5f4-4321-b1c2-d3e4f5g6h7i8",
+    "name": "Blog Application API - Full Collection",
+    "description": "Postman collection aligned with the current Blog Application API controllers, DTOs, and auth flow.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "event": [
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "const requestName = pm.info.requestName;",
+          "const expectedStatusCodes = {",
+          "  \"Register Author\": [201],",
+          "  \"Register Admin\": [201],",
+          "  \"Login User\": [200],",
+          "  \"Refresh Token\": [200],",
+          "  \"Get All Published Posts\": [200],",
+          "  \"Get Most Liked Posts\": [200],",
+          "  \"Get My Posts\": [200],",
+          "  \"Create Post\": [201],",
+          "  \"Get Post by Slug\": [200],",
+          "  \"Update Post\": [200],",
+          "  \"Delete Post\": [204],",
+          "  \"Toggle Post Like\": [200],",
+          "  \"Toggle Post Bookmark\": [200],",
+          "  \"Get Like Status\": [200],",
+          "  \"Get Bookmark Status\": [200],",
+          "  \"Get Post Likes\": [200],",
+          "  \"Get Posts by Category\": [200],",
+          "  \"Get Posts by Tag\": [200],",
+          "  \"Get All Categories\": [200],",
+          "  \"Get Category by ID\": [200],",
+          "  \"Create Category (Admin)\": [201],",
+          "  \"Update Category (Admin)\": [200],",
+          "  \"Delete Category (Admin)\": [204],",
+          "  \"Get All Tags\": [200],",
+          "  \"Get Tag by ID\": [200],",
+          "  \"Create Tag\": [201],",
+          "  \"Delete Tag\": [204],",
+          "  \"Add Comment to Post\": [201],",
+          "  \"Update Comment\": [200],",
+          "  \"Get Post Comments\": [200],",
+          "  \"Delete Comment\": [204],",
+          "  \"Like Comment\": [200],",
+          "  \"Get My Profile\": [200],",
+          "  \"Update Profile\": [200],",
+          "  \"Change Password\": [200],",
+          "  \"Get My Bookmarks\": [200],",
+          "  \"Get User by Username\": [200],",
+          "  \"Get User Posts\": [200],",
+          "  \"Get All Users\": [200],",
+          "  \"Get User by ID\": [200],",
+          "  \"Delete User\": [204]",
+          "};",
+          "const expected = expectedStatusCodes[requestName];",
+          "if (expected) {",
+          "  pm.test(`Status code is one of ${expected.join(', ')}`, function () {",
+          "    pm.expect(expected).to.include(pm.response.code);",
+          "  });",
+          "}",
+          "const method = pm.request.method;",
+          "const contentType = (pm.response.headers.get('Content-Type') || '').toLowerCase();",
+          "const hasBody = !!pm.response.text();",
+          "if (hasBody && method !== 'HEAD' && requestName !== 'Change Password') {",
+          "  pm.test('Response content type is JSON when body is present', function () {",
+          "    pm.expect(contentType).to.include('application/json');",
+          "  });",
+          "}",
+          "if ([\"Login User\", \"Refresh Token\"].includes(requestName) && pm.response.code === 200) {",
+          "  const jsonData = pm.response.json();",
+          "  pm.test('Auth response contains tokens', function () {",
+          "    pm.expect(jsonData.accessToken).to.be.a('string').and.not.empty;",
+          "    pm.expect(jsonData.refreshToken).to.be.a('string').and.not.empty;",
+          "    pm.expect(jsonData.tokenType).to.eql('Bearer');",
+          "  });",
+          "}",
+          "if ([\"Toggle Post Like\", \"Get Like Status\"].includes(requestName) && pm.response.code === 200) {",
+          "  const jsonData = pm.response.json();",
+          "  pm.test('Like response contains boolean liked field', function () {",
+          "    pm.expect(jsonData.liked).to.be.a('boolean');",
+          "  });",
+          "  if (requestName === 'Toggle Post Like') {",
+          "    pm.test('Toggle like response contains numeric likeCount field', function () {",
+          "      pm.expect(jsonData.likeCount).to.be.a('number');",
+          "    });",
+          "  }",
+          "}",
+          "if ([\"Toggle Post Bookmark\", \"Get Bookmark Status\"].includes(requestName) && pm.response.code === 200) {",
+          "  const jsonData = pm.response.json();",
+          "  pm.test('Bookmark response contains boolean bookmarked field', function () {",
+          "    pm.expect(jsonData.bookmarked).to.be.a('boolean');",
+          "  });",
+          "  if (requestName === 'Toggle Post Bookmark') {",
+          "    pm.test('Toggle bookmark response contains numeric bookmarkCount field', function () {",
+          "      pm.expect(jsonData.bookmarkCount).to.be.a('number');",
+          "    });",
+          "  }",
+          "}",
+          "if (requestName === 'Like Comment' && pm.response.code === 200) {",
+          "  const jsonData = pm.response.json();",
+          "  pm.test('Comment like response contains likedByCurrentUser', function () {",
+          "    pm.expect(jsonData.likedByCurrentUser).to.be.a('boolean');",
+          "  });",
+          "}",
+          "const pagedRequests = new Set([",
+          "  'Get All Published Posts',",
+          "  'Get Most Liked Posts',",
+          "  'Get My Posts',",
+          "  'Get Post Likes',",
+          "  'Get Posts by Category',",
+          "  'Get Posts by Tag',",
+          "  'Get Post Comments',",
+          "  'Get My Bookmarks',",
+          "  'Get User Posts'",
+          "]);",
+          "if (pagedRequests.has(requestName) && pm.response.code === 200) {",
+          "  const jsonData = pm.response.json();",
+          "  pm.test('Paged response exposes content array', function () {",
+          "    pm.expect(jsonData).to.have.property('content');",
+          "    pm.expect(jsonData.content).to.be.an('array');",
+          "  });",
+          "}",
+          "if ([\"Create Post\", \"Update Post\", \"Get Post by Slug\"].includes(requestName) && pm.response.code >= 200 && pm.response.code < 300) {",
+          "  const jsonData = pm.response.json();",
+          "  if (jsonData.id) pm.collectionVariables.set('post_id', jsonData.id);",
+          "  if (jsonData.slug) pm.collectionVariables.set('post_slug', jsonData.slug);",
+          "}",
+          "if ([\"Create Category (Admin)\", \"Update Category (Admin)\", \"Get Category by ID\"].includes(requestName) && pm.response.code >= 200 && pm.response.code < 300) {",
+          "  const jsonData = pm.response.json();",
+          "  if (jsonData.id !== undefined && jsonData.id !== null) pm.collectionVariables.set('category_id', String(jsonData.id));",
+          "}",
+          "if ([\"Create Tag\", \"Get Tag by ID\"].includes(requestName) && pm.response.code >= 200 && pm.response.code < 300) {",
+          "  const jsonData = pm.response.json();",
+          "  if (jsonData.id) pm.collectionVariables.set('tag_id', jsonData.id);",
+          "}",
+          "if ([\"Add Comment to Post\", \"Update Comment\", \"Like Comment\"].includes(requestName) && pm.response.code >= 200 && pm.response.code < 300) {",
+          "  const jsonData = pm.response.json();",
+          "  if (jsonData.id) pm.collectionVariables.set('comment_id', jsonData.id);",
+          "}",
+          "if ([\"Login User\", \"Register Author\", \"Register Admin\", \"Get My Profile\", \"Get User by ID\", \"Get User by Username\"].includes(requestName) && hasBody && contentType.includes('application/json')) {",
+          "  const jsonData = pm.response.json();",
+          "  const user = jsonData.user || jsonData;",
+          "  if (user.id) pm.collectionVariables.set('user_id', user.id);",
+          "  if (user.username) pm.collectionVariables.set('username', user.username);",
+          "}"
+        ]
+      }
+    }
+  ],
+  "item": [
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Register Author",
+          "auth": {
+            "type": "noauth"
+          },
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"ratanak123\",\n  \"fullName\": \"Ichigo Baka\",\n  \"email\": \"ichigo@gmail.com\",\n  \"password\": \"Ichigo11020315\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/auth/register",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "register"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Register Admin",
+          "auth": {
+            "type": "noauth"
+          },
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"adminnak123\",\n  \"fullName\": \"nakisadmin\",\n  \"email\": \"adminnak@gmail.com\",\n  \"password\": \"Admin1234NakNak\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/auth/register-admin",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "register-admin"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Login User",
+          "auth": {
+            "type": "noauth"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const jsonData = pm.response.json();",
+                  "if (jsonData.accessToken) pm.collectionVariables.set('auth_token', jsonData.accessToken);",
+                  "if (jsonData.refreshToken) pm.collectionVariables.set('refresh_token', jsonData.refreshToken);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"identifier\": \"ratanak123\",\n  \"password\": \"Ichigo11020315\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/auth/login",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "login"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Refresh Token",
+          "auth": {
+            "type": "noauth"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const jsonData = pm.response.json();",
+                  "if (jsonData.accessToken) pm.collectionVariables.set('auth_token', jsonData.accessToken);",
+                  "if (jsonData.refreshToken) pm.collectionVariables.set('refresh_token', jsonData.refreshToken);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refresh_token}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/auth/refresh",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "refresh"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Posts",
+      "item": [
+        {
+          "name": "Get All Published Posts",
+          "auth": {
+            "type": "noauth"
+          },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/posts?page=0&size=10",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "posts"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "10"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Most Liked Posts",
+          "auth": {
+            "type": "noauth"
+          },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/posts/most-liked?page=0&size=10",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "posts",
+                "most-liked"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "10"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get My Posts",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/posts/my-posts?page=0&size=10",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "posts",
+                "my-posts"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "10"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Post",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"My New Blog Post\",\n  \"content\": \"This is the content of my post.\",\n  \"thumbnail\": \"https://example.com/image.jpg\",\n  \"categoryId\": \"{{category_id}}\",\n  \"tagIds\": [\"{{tag_id}}\"],\n  \"status\": \"PUBLISHED\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/posts",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "posts"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Post by Slug",
+          "auth": {
+            "type": "noauth"
+          },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/posts/{{post_slug}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "posts",
+                "{{post_slug}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update Post",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Updated Title\",\n  \"content\": \"Updated content.\",\n  \"thumbnail\": \"https://example.com/updated-image.jpg\",\n  \"categoryId\": \"{{category_id}}\",\n  \"tagIds\": [\"{{tag_id}}\"],\n  \"status\": \"PUBLISHED\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/posts/{{post_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "posts",
+                "{{post_id}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Delete Post",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/posts/{{post_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "posts",
+                "{{post_id}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Toggle Post Like",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/posts/{{post_id}}/like",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "posts",
+                "{{post_id}}",
+                "like"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Toggle Post Bookmark",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/posts/{{post_id}}/bookmark",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "posts",
+                "{{post_id}}",
+                "bookmark"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Like Status",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/posts/{{post_id}}/like/status",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "posts",
+                "{{post_id}}",
+                "like",
+                "status"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Post Likes",
+          "auth": {
+            "type": "noauth"
+          },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/posts/{{post_id}}/likes?page=0&size=10",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "posts",
+                "{{post_id}}",
+                "likes"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "10"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Bookmark Status",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/posts/{{post_id}}/bookmark/status",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "posts",
+                "{{post_id}}",
+                "bookmark",
+                "status"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Posts by Category",
+          "auth": {
+            "type": "noauth"
+          },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/posts/category/{{category_id}}?page=0&size=10",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "posts",
+                "category",
+                "{{category_id}}"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "10"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Posts by Tag",
+          "auth": {
+            "type": "noauth"
+          },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/posts/tag/{{tag_id}}?page=0&size=10",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "posts",
+                "tag",
+                "{{tag_id}}"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "10"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Categories",
+      "item": [
+        {
+          "name": "Get All Categories",
+          "auth": {
+            "type": "noauth"
+          },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/categories",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "categories"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Category by ID",
+          "auth": {
+            "type": "noauth"
+          },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/categories/{{category_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "categories",
+                "{{category_id}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Category (Admin)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Technology\",\n  \"description\": \"All about tech\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/categories",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "categories"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update Category (Admin)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Tech Updated\",\n  \"description\": \"Updated description\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/categories/{{category_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "categories",
+                "{{category_id}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Delete Category (Admin)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/categories/{{category_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "categories",
+                "{{category_id}}"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Tags",
+      "item": [
+        {
+          "name": "Get All Tags",
+          "auth": {
+            "type": "noauth"
+          },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/tags",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "tags"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Tag by ID",
+          "auth": {
+            "type": "noauth"
+          },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/tags/{{tag_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "tags",
+                "{{tag_id}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Tag",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Java\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/tags",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "tags"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Delete Tag",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/tags/{{tag_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "tags",
+                "{{tag_id}}"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Comments",
+      "item": [
+        {
+          "name": "Add Comment to Post",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"content\": \"Great post!\",\n  \"parentId\": null\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/posts/{{post_id}}/comments",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "posts",
+                "{{post_id}}",
+                "comments"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update Comment",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"content\": \"Updated comment content\",\n  \"parentId\": null\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/comments/{{comment_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "comments",
+                "{{comment_id}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Post Comments",
+          "auth": {
+            "type": "noauth"
+          },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/posts/{{post_id}}/comments?page=0&size=10",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "posts",
+                "{{post_id}}",
+                "comments"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "10"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Delete Comment",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/comments/{{comment_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "comments",
+                "{{comment_id}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Like Comment",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/comments/{{comment_id}}/like",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "comments",
+                "{{comment_id}}",
+                "like"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Profile",
+      "item": [
+        {
+          "name": "Get My Profile",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/profile",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "profile"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update Profile",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fullName\": \"John Updated\",\n  \"email\": \"johndoe@example.com\",\n  \"bio\": \"New bio\",\n  \"profileImage\": \"https://example.com/profile.jpg\",\n  \"coverImage\": \"https://example.com/cover.jpg\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/profile",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "profile"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Change Password",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"currentPassword\": \"Password123\",\n  \"newPassword\": \"NewSecurePass123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/profile/change-password",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "profile",
+                "change-password"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get My Bookmarks",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/profile/bookmarks?page=0&size=10",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "profile",
+                "bookmarks"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "10"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get User by Username",
+          "auth": {
+            "type": "noauth"
+          },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/profiles/{{username}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "profiles",
+                "{{username}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get User Posts",
+          "auth": {
+            "type": "noauth"
+          },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/profiles/{{username}}/posts?page=0&size=10",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "profiles",
+                "{{username}}",
+                "posts"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "10"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Users",
+      "item": [
+        {
+          "name": "Get All Users",
+          "auth": {
+            "type": "noauth"
+          },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/users",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "users"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get User by ID",
+          "auth": {
+            "type": "noauth"
+          },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/users/{{user_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "users",
+                "{{user_id}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Delete User",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/users/{{user_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "users",
+                "{{user_id}}"
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{auth_token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8080",
+      "type": "string"
+    },
+    {
+      "key": "auth_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "refresh_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "post_id",
+      "value": "550e8400-e29b-41d4-a716-446655440003",
+      "type": "string"
+    },
+    {
+      "key": "post_slug",
+      "value": "my-new-blog-post",
+      "type": "string"
+    },
+    {
+      "key": "category_id",
+      "value": "550e8400-e29b-41d1-a716-446655440000",
+      "type": "string"
+    },
+    {
+      "key": "tag_id",
+      "value": "550e8400-e29b-41d1-a716-446655440001",
+      "type": "string"
+    },
+    {
+      "key": "comment_id",
+      "value": "550e8400-e29b-41d1-a716-446655440005",
+      "type": "string"
+    },
+    {
+      "key": "user_id",
+      "value": "550e8400-e29b-41d4-a716-446655440009",
+      "type": "string"
+    },
+    {
+      "key": "username",
+      "value": "johndoe",
+      "type": "string"
+    }
+  ]
+}

@@ -1,5 +1,7 @@
 package co.istad.blogapplication.blog.config;
 
+import co.istad.blogapplication.blog.dto.response.UserResponse;
+import co.istad.blogapplication.blog.entity.User;
 import org.modelmapper.ModelMapper;
 import org.modelmapper.convention.MatchingStrategies;
 import org.springframework.context.annotation.Bean;
@@ -14,8 +16,15 @@ public class AppConfig {
     public ModelMapper modelMapper() {
         ModelMapper mapper = new ModelMapper();
         mapper.getConfiguration().setMatchingStrategy(MatchingStrategies.STRICT);
+        mapper.typeMap(User.class, UserResponse.class).addMappings(configurer -> {
+            configurer.map(User::getProfileImage, UserResponse::setProfileImage);
+            configurer.using(context -> context.getSource() == null ? null : context.getSource().toString())
+                    .map(User::getRole, UserResponse::setRole);
+            configurer.skip(UserResponse::setVerified);
+        });
         return mapper;
     }
+
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();

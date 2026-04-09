@@ -8,28 +8,29 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 
 @Data
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
 public class PostResponse {
-    private Long id;
+    private UUID id;
     private String title;
     private String slug;
     private String content;
-    private String thumbnail;
-    private Integer readingTime;
+    private String thumbnailUrl;
     private PostStatus status;
-    private LocalDateTime scheduledAt;
+    private Integer viewCount;
+    private Integer likeCount;
+    private Integer commentCount;
+    private Integer bookmarkCount;
     private LocalDateTime publishedAt;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private UserResponse author;
     private CategoryResponse category;
     private List<TagResponse> tags;
-    private long likeCount;
-    private long commentCount;
     private boolean likedByCurrentUser;
     private boolean bookmarkedByCurrentUser;
 }

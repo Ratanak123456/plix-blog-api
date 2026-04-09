@@ -4,6 +4,8 @@ import co.istad.blogapplication.blog.dto.request.PostRequest;
 import co.istad.blogapplication.blog.dto.response.PostResponse;
 import co.istad.blogapplication.blog.entity.*;
 import co.istad.blogapplication.blog.entity.Post.PostStatus;
+import co.istad.blogapplication.blog.exception.ForbiddenException;
+import co.istad.blogapplication.blog.exception.NotFoundException;
 import co.istad.blogapplication.blog.repository.*;
 import co.istad.blogapplication.blog.service.PostService;
 import lombok.RequiredArgsConstructor;
@@ -32,20 +34,22 @@ public class PostServiceImpl implements PostService {
 
     @Override
     @Transactional
-    public PostResponse createPost(PostRequest request, String email) {
-        User author = getUser(email);
+    public PostResponse createPost(PostRequest request, String username) {
+        User author = getUserByUsername(username);
 
-        String slug = generateUniqueSlug(request.getTitle());
+        String slug = generateUniqueSlug(request.getTitle(), null);
 
         Post post = Post.builder()
                 .title(request.getTitle())
                 .slug(slug)
                 .content(request.getContent())
-                .thumbnail(request.getThumbnail())
+                .thumbnailUrl(request.getThumbnail())
                 .status(request.getStatus() != null ? request.getStatus() : PostStatus.DRAFT)
-                .scheduledAt(request.getScheduledAt())
-                .readingTime(calculateReadingTime(request.getContent())) // simple stub
                 .author(author)
+                .viewCount(0)
+                .likeCount(0)
+                .commentCount(0)
+                .bookmarkCount(0)
                 .build();
 
         if (request.getStatus() == PostStatus.PUBLISHED) {
@@ -54,7 +58,7 @@ public class PostServiceImpl implements PostService {
 
         if (request.getCategoryId() != null) {
             Category category = categoryRepository.findById(request.getCategoryId())
-                    .orElseThrow(() -> new RuntimeException("Category not found"));
+                    .orElseThrow(() -> new NotFoundException("Category not found"));
             post.setCategory(category);
         }
 
@@ -64,18 +68,18 @@ public class PostServiceImpl implements PostService {
         }
 
         Post saved = postRepository.save(post);
-        return mapToResponse(saved, email);
+        return mapToResponse(saved, username);
     }
 
     @Override
     @Transactional
-    public PostResponse updatePost(Long id, PostRequest request, String email) {
-        Post post = getPostAndVerifyOwner(id, email);
+    public PostResponse updatePost(UUID id, PostRequest request, String username) {
+        Post post = getPostAndVerifyOwner(id, username);
 
         post.setTitle(request.getTitle());
+        post.setSlug(generateUniqueSlug(request.getTitle(), post.getId()));
         post.setContent(request.getContent());
-        post.setThumbnail(request.getThumbnail());
-        post.setReadingTime(calculateReadingTime(request.getContent()));
+        post.setThumbnailUrl(request.getThumbnail());
 
         if (request.getStatus() != null) {
             if (request.getStatus() == PostStatus.PUBLISHED && post.getPublishedAt() == null) {
@@ -86,37 +90,42 @@ public class PostServiceImpl implements PostService {
 
         if (request.getCategoryId() != null) {
             Category category = categoryRepository.findById(request.getCategoryId())
-                    .orElseThrow(() -> new RuntimeException("Category not found"));
+                    .orElseThrow(() -> new NotFoundException("Category not found"));
             post.setCategory(category);
+        } else {
+            post.setCategory(null);
         }
 
-        if (request.getTagIds() != null) {
-            List<Tag> tags = tagRepository.findAllById(request.getTagIds());
-            post.setTags(tags);
-        }
+        post.setTags(resolveTags(request.getTagIds()));
 
         Post updated = postRepository.save(post);
-        return mapToResponse(updated, email);
+        return mapToResponse(updated, username);
     }
 
     @Override
     @Transactional
-    public void deletePost(Long id, String email) {
-        Post post = getPostAndVerifyOwner(id, email);
-        postRepository.delete(post);
+    public void deletePost(UUID id, String username) {
+        Post post = getPostAndVerifyOwner(id, username);
+        post.setDeletedAt(LocalDateTime.now());
+        postRepository.save(post);
     }
 
     @Override
     public PostResponse getPostBySlug(String slug) {
         Post post = postRepository.findBySlug(slug)
-                .orElseThrow(() -> new RuntimeException("Post not found"));
+                .orElseThrow(() -> new NotFoundException("Post not found"));
+
+        // Increment view count
+        post.setViewCount(post.getViewCount() + 1);
+        postRepository.save(post);
+
         return mapToResponse(post, null);
     }
 
     @Override
-    public PostResponse getPostById(Long id) {
+    public PostResponse getPostById(UUID id) {
         Post post = postRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Post not found"));
+                .orElseThrow(() -> new NotFoundException("Post not found"));
         return mapToResponse(post, null);
     }
 
@@ -127,26 +136,20 @@ public class PostServiceImpl implements PostService {
     }
 
     @Override
-    public Page<PostResponse> getMyPosts(String email, Pageable pageable) {
-        User user = getUser(email);
+    public Page<PostResponse> getMyPosts(String username, Pageable pageable) {
+        User user = getUserByUsername(username);
         return postRepository.findByAuthor(user, pageable)
-                .map(post -> mapToResponse(post, email));
+                .map(post -> mapToResponse(post, username));
     }
 
     @Override
-    public Page<PostResponse> searchPosts(String keyword, Pageable pageable) {
-        return postRepository.searchByKeyword(keyword, pageable)
-                .map(post -> mapToResponse(post, null));
-    }
-
-    @Override
-    public Page<PostResponse> getPostsByCategory(Long categoryId, Pageable pageable) {
+    public Page<PostResponse> getPostsByCategory(UUID categoryId, Pageable pageable) {
         return postRepository.findByCategoryId(categoryId, pageable)
                 .map(post -> mapToResponse(post, null));
     }
 
     @Override
-    public Page<PostResponse> getPostsByTag(Long tagId, Pageable pageable) {
+    public Page<PostResponse> getPostsByTag(UUID tagId, Pageable pageable) {
         return postRepository.findByTagId(tagId, pageable)
                 .map(post -> mapToResponse(post, null));
     }
@@ -157,64 +160,51 @@ public class PostServiceImpl implements PostService {
                 .map(post -> mapToResponse(post, null));
     }
 
-    @Override
-    @Transactional
-    public PostResponse publishPost(Long id, String email) {
-        Post post = getPostAndVerifyOwner(id, email);
-        post.setStatus(PostStatus.PUBLISHED);
-        post.setPublishedAt(LocalDateTime.now());
-        return mapToResponse(postRepository.save(post), email);
+    private User getUserByUsername(String username) {
+        return userRepository.findByUsernameAndIsDeletedFalse(username)
+                .orElseThrow(() -> new NotFoundException("User not found"));
     }
 
-    @Override
-    @Transactional
-    public PostResponse unpublishPost(Long id, String email) {
-        Post post = getPostAndVerifyOwner(id, email);
-        post.setStatus(PostStatus.DRAFT);
-        return mapToResponse(postRepository.save(post), email);
-    }
-
-    // ─── Helpers ───────────────────────────────────────────────
-
-    private User getUser(String email) {
-        return userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("User not found"));
-    }
-
-    private Post getPostAndVerifyOwner(Long id, String email) {
+    private Post getPostAndVerifyOwner(UUID id, String username) {
         Post post = postRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Post not found"));
-        User user = getUser(email);
+                .orElseThrow(() -> new NotFoundException("Post not found"));
+        User user = getUserByUsername(username);
         if (!post.getAuthor().getId().equals(user.getId()) && user.getRole() != User.Role.ADMIN) {
-            throw new RuntimeException("You are not authorized to modify this post");
+            throw new ForbiddenException("You are not authorized to modify this post");
         }
         return post;
     }
 
-    private String generateUniqueSlug(String title) {
-        // Simple slug stub without SlugUtil
+    private String generateUniqueSlug(String title, UUID currentPostId) {
         String base = title.toLowerCase().replaceAll("\\s+", "-").replaceAll("[^a-z0-9\\-]", "");
         String slug = base;
         int count = 1;
-        while (postRepository.findBySlug(slug).isPresent()) {
+        while (postRepository.findBySlug(slug)
+                .filter(existingPost -> !existingPost.getId().equals(currentPostId))
+                .isPresent()) {
             slug = base + "-" + count++;
         }
         return slug;
     }
 
-    private int calculateReadingTime(String content) {
-        // Simple stub: 1 minute per 200 words
-        int words = content == null ? 0 : content.trim().split("\\s+").length;
-        return Math.max(1, words / 200);
+    private List<Tag> resolveTags(List<UUID> tagIds) {
+        if (tagIds == null || tagIds.isEmpty()) {
+            return List.of();
+        }
+        return tagRepository.findAllById(tagIds);
     }
 
-    private PostResponse mapToResponse(Post post, String currentUserEmail) {
+    private PostResponse mapToResponse(Post post, String currentUsername) {
         PostResponse response = modelMapper.map(post, PostResponse.class);
-        response.setLikeCount(postLikeRepository.countByPost(post));
-        response.setCommentCount(commentRepository.countByPost(post));
 
-        if (currentUserEmail != null) {
-            userRepository.findByEmail(currentUserEmail).ifPresent(user -> {
+        // Use persisted counters from the post record.
+        response.setLikeCount(post.getLikeCount());
+        response.setCommentCount(post.getCommentCount());
+        response.setViewCount(post.getViewCount());
+        response.setBookmarkCount(post.getBookmarkCount());
+
+        if (currentUsername != null) {
+            userRepository.findByUsernameAndIsDeletedFalse(currentUsername).ifPresent(user -> {
                 response.setLikedByCurrentUser(postLikeRepository.existsByUserAndPost(user, post));
                 response.setBookmarkedByCurrentUser(bookmarkRepository.existsByUserAndPost(user, post));
             });

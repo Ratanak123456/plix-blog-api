@@ -7,17 +7,18 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 
 @Data
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
 public class CommentResponse {
-    private Long id;
+    private UUID id;
     private String content;
     private LocalDateTime createdAt;
     private UserResponse user;
-    private Long parentId;
+    private UUID parentId;
     private List<CommentResponse> replies;
     private long likeCount;
     private boolean likedByCurrentUser;

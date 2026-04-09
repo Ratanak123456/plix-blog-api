@@ -30,7 +30,7 @@ public class ProfileController {
 
     @PutMapping("/profile")
     public ResponseEntity<UserResponse> updateProfile(
-            @RequestBody ProfileRequest request,
+            @Valid @RequestBody ProfileRequest request,
             @AuthenticationPrincipal UserDetails userDetails) {
         return ResponseEntity.ok(profileService.updateProfile(userDetails.getUsername(), request));
     }
@@ -50,12 +50,12 @@ public class ProfileController {
         return ResponseEntity.ok(profileService.getMyBookmarks(userDetails.getUsername(), pageable));
     }
 
-    @GetMapping("/users/{username}")
+    @GetMapping("/profiles/{username}")
     public ResponseEntity<UserResponse> getUserByUsername(@PathVariable String username) {
         return ResponseEntity.ok(profileService.getUserByUsername(username));
     }
 
-    @GetMapping("/users/{username}/posts")
+    @GetMapping("/profiles/{username}/posts")
     public ResponseEntity<Page<PostResponse>> getUserPosts(
             @PathVariable String username,
             @PageableDefault(size = 10) Pageable pageable) {

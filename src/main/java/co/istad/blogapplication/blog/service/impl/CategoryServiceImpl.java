@@ -3,6 +3,9 @@ package co.istad.blogapplication.blog.service.impl;
 import co.istad.blogapplication.blog.dto.request.CategoryRequest;
 import co.istad.blogapplication.blog.dto.response.CategoryResponse;
 import co.istad.blogapplication.blog.entity.Category;
+import co.istad.blogapplication.blog.exception.BadRequestException;
+import co.istad.blogapplication.blog.exception.ConflictException;
+import co.istad.blogapplication.blog.exception.NotFoundException;
 import co.istad.blogapplication.blog.repository.CategoryRepository;
 import co.istad.blogapplication.blog.service.CategoryService;
 import lombok.RequiredArgsConstructor;
@@ -13,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.text.Normalizer;
 import java.util.List;
 import java.util.Locale;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -26,12 +30,20 @@ public class CategoryServiceImpl implements CategoryService {
     @Transactional
     public CategoryResponse createCategory(CategoryRequest request) {
         if (categoryRepository.existsByName(request.getName())) {
-            throw new RuntimeException("Category already exists"); // temporary replacement
+            throw new ConflictException("Category already exists");
+        }
+
+        String slug = toSlug(request.getName());
+        if (slug.isBlank()) {
+            throw new BadRequestException("Category name must contain letters or numbers");
+        }
+        if (categoryRepository.existsBySlug(slug)) {
+            throw new ConflictException("Category slug already exists");
         }
 
         Category category = Category.builder()
                 .name(request.getName())
-                .slug(toSlug(request.getName())) // temporary slug function
+                .slug(slug)
                 .description(request.getDescription())
                 .build();
 
@@ -40,12 +52,25 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Override
     @Transactional
-    public CategoryResponse updateCategory(Long id, CategoryRequest request) {
+    public CategoryResponse updateCategory(UUID id, CategoryRequest request) {
         Category category = categoryRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Category not found")); // temp replacement
+                .orElseThrow(() -> new NotFoundException("Category not found"));
+
+        String slug = toSlug(request.getName());
+        if (slug.isBlank()) {
+            throw new BadRequestException("Category name must contain letters or numbers");
+        }
+        if (!category.getName().equals(request.getName()) && categoryRepository.existsByName(request.getName())) {
+            throw new ConflictException("Category already exists");
+        }
+        categoryRepository.findBySlug(slug)
+                .filter(existing -> !existing.getId().equals(id))
+                .ifPresent(existing -> {
+                    throw new ConflictException("Category slug already exists");
+                });
 
         category.setName(request.getName());
-        category.setSlug(toSlug(request.getName()));
+        category.setSlug(slug);
         category.setDescription(request.getDescription());
 
         return modelMapper.map(categoryRepository.save(category), CategoryResponse.class);
@@ -53,9 +78,9 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Override
     @Transactional
-    public void deleteCategory(Long id) {
+    public void deleteCategory(UUID id) {
         Category category = categoryRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Category not found")); // temp replacement
+                .orElseThrow(() -> new NotFoundException("Category not found"));
         categoryRepository.delete(category);
     }
 
@@ -67,13 +92,12 @@ public class CategoryServiceImpl implements CategoryService {
     }
 
     @Override
-    public CategoryResponse getCategoryById(Long id) {
+    public CategoryResponse getCategoryById(UUID id) {
         return categoryRepository.findById(id)
                 .map(c -> modelMapper.map(c, CategoryResponse.class))
-                .orElseThrow(() -> new RuntimeException("Category not found")); // temp replacement
+                .orElseThrow(() -> new NotFoundException("Category not found"));
     }
 
-    // Temporary simple slug generator
     private String toSlug(String input) {
         String nowhitespace = input.trim().replaceAll("\\s+", "-");
         String normalized = Normalizer.normalize(nowhitespace, Normalizer.Form.NFD);

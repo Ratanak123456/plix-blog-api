@@ -9,11 +9,10 @@ import org.springframework.data.domain.Pageable;
 
 
 public interface ProfileService {
-    UserResponse getMyProfile(String email);
-    UserResponse updateProfile(String email, ProfileRequest request);
-    void changePassword(String email, PasswordRequest request);
-    Page<PostResponse> getMyBookmarks(String email, Pageable pageable);
+    UserResponse getMyProfile(String username);
+    UserResponse updateProfile(String username, ProfileRequest request);
+    void changePassword(String username, PasswordRequest request);
+    Page<PostResponse> getMyBookmarks(String username, Pageable pageable);
     UserResponse getUserByUsername(String username);
     Page<PostResponse> getUserPosts(String username, Pageable pageable);
 }
-
