@@ -3,21 +3,26 @@
 ## Required environment variables
 
 - `SPRING_PROFILES_ACTIVE=prod`
-- `DB_URL`
+- `DB_URL` or `DATABASE_URL`
 - `DB_USERNAME`
 - `DB_PASSWORD`
 - `JWT_SECRET`
 - `FRONTEND_URL`
+
+## Optional environment variables
+
 - `MAIL_FROM`
 - `MAIL_HOST`
 - `MAIL_USERNAME`
 - `MAIL_PASSWORD`
+- `MAIL_PORT`
 
 ## Recommended production behavior
 
 - Flyway manages schema creation and upgrades.
 - Hibernate runs with `ddl-auto=validate`.
 - SQL logging is disabled in `prod`.
+- Mail health checks are disabled in `prod`.
 - Health endpoint is available at `/actuator/health`.
 
 ## Container build
