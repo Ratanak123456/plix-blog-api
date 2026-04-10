@@ -3,13 +3,13 @@ spring:
     activate:
       on-profile: dev
   datasource:
-    url: ${DB_URL:jdbc:postgresql://localhost:5432/blog}
-    username: ${DB_USERNAME:postgres}
-    password: ${DB_PASSWORD:postgres}
+    url: ${DB_URL:jdbc:postgresql://dpg-d7bq5btm5p6s73f3fg9g-a.oregon-postgres.render.com:5432/blog_alqc}
+    username: ${DB_USERNAME:blog_alqc_user}
+    password: ${DB_PASSWORD:hmuiD8Umupcc8o9DD03IhgcHLWtUuh83}
     driver-class-name: org.postgresql.Driver
   jpa:
     hibernate:
-      ddl-auto: validate
+      ddl-auto: update
     show-sql: true
     properties:
       hibernate:
