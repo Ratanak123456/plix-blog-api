@@ -1338,7 +1338,7 @@
   "variable": [
     {
       "key": "base_url",
-      "value": "http://localhost:8080",
+      "value": "https://plix-blog-api.onrender.com",
       "type": "string"
     },
     {
