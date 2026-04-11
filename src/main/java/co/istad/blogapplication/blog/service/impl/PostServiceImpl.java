@@ -111,13 +111,13 @@ public class PostServiceImpl implements PostService {
     }
 
     @Override
+    @Transactional
     public PostResponse getPostBySlug(String slug) {
         Post post = postRepository.findBySlug(slug)
                 .orElseThrow(() -> new NotFoundException("Post not found"));
 
-        // Increment view count
+        postRepository.incrementViewCountBySlug(slug);
         post.setViewCount(post.getViewCount() + 1);
-        postRepository.save(post);
 
         return mapToResponse(post, null);
     }

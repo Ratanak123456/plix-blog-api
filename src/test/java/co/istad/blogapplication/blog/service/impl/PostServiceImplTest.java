@@ -27,6 +27,7 @@ import java.util.UUID;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -123,5 +124,37 @@ class PostServiceImplTest {
         assertNotNull(response);
         assertEquals("Updated Title", response.getTitle());
         assertEquals("new-thumb.png", response.getThumbnailUrl());
+    }
+
+    @Test
+    void getPostBySlugIncrementsViewCount() {
+        User author = User.builder()
+                .id(UUID.randomUUID())
+                .email("author@example.com")
+                .username("author")
+                .fullName("Author")
+                .role(User.Role.AUTHOR)
+                .isActive(true)
+                .isDeleted(false)
+                .build();
+
+        Post post = Post.builder()
+                .id(UUID.randomUUID())
+                .title("View Test")
+                .slug("view-test")
+                .content("content")
+                .author(author)
+                .viewCount(3)
+                .build();
+
+        when(postRepository.findBySlug("view-test")).thenReturn(Optional.of(post));
+        when(postRepository.incrementViewCountBySlug("view-test")).thenReturn(1);
+
+        PostResponse response = postService.getPostBySlug("view-test");
+
+        verify(postRepository).incrementViewCountBySlug("view-test");
+        verify(postRepository, times(1)).findBySlug("view-test");
+        assertEquals(4, post.getViewCount());
+        assertEquals(4, response.getViewCount());
     }
 }
