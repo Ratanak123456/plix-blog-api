@@ -1118,7 +1118,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"fullName\": \"John Updated\",\n  \"email\": \"johndoe@example.com\",\n  \"bio\": \"New bio\",\n  \"profileImage\": \"https://example.com/profile.jpg\",\n  \"coverImage\": \"https://example.com/cover.jpg\"\n}",
+              "raw": "{\n  \"username\": \"johndoe_updated\",\n  \"fullName\": \"John Updated\",\n  \"email\": \"johndoe@example.com\",\n  \"bio\": \"New bio\",\n  \"profileImage\": \"https://example.com/profile.jpg\",\n  \"coverImage\": \"https://example.com/cover.jpg\"\n}",
               "options": {
                 "raw": {
                   "language": "json"

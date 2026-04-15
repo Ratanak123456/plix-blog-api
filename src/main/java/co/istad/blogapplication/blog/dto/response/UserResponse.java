@@ -1,5 +1,6 @@
 package co.istad.blogapplication.blog.dto.response;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -18,8 +19,13 @@ public class UserResponse {
     private String fullName;
     private String email;
     private String bio;
+
+    @JsonProperty("profileImage")
     private String profileImage;
+
+    @JsonProperty("coverImage")
     private String coverImage;
+
     private boolean isVerified;
     private String role;
     private LocalDateTime createdAt;
