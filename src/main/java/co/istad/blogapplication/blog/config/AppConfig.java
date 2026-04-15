@@ -18,6 +18,7 @@ public class AppConfig {
         mapper.getConfiguration().setMatchingStrategy(MatchingStrategies.STRICT);
         mapper.typeMap(User.class, UserResponse.class).addMappings(configurer -> {
             configurer.map(User::getProfileImage, UserResponse::setProfileImage);
+            configurer.map(User::getCoverImage, UserResponse::setCoverImage);
             configurer.using(context -> context.getSource() == null ? null : context.getSource().toString())
                     .map(User::getRole, UserResponse::setRole);
             configurer.skip(UserResponse::setVerified);

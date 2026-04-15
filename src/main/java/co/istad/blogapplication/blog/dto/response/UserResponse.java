@@ -19,6 +19,7 @@ public class UserResponse {
     private String email;
     private String bio;
     private String profileImage;
+    private String coverImage;
     private boolean isVerified;
     private String role;
     private LocalDateTime createdAt;

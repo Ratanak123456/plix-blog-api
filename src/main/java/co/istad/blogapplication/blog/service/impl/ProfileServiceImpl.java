@@ -39,11 +39,17 @@ public class ProfileServiceImpl implements ProfileService {
     @Transactional
     public UserResponse updateProfile(String username, ProfileRequest request) {
         User user = findUserByUsername(username);
+        if (request.getUsername() != null
+                && !request.getUsername().equalsIgnoreCase(user.getUsername())
+                && userRepository.existsByUsername(request.getUsername())) {
+            throw new ConflictException("Username already exists");
+        }
         if (request.getEmail() != null
                 && !request.getEmail().equalsIgnoreCase(user.getEmail())
                 && userRepository.existsByEmail(request.getEmail())) {
             throw new ConflictException("Email already exists");
         }
+        if (request.getUsername() != null) user.setUsername(request.getUsername());
         if (request.getFullName() != null) user.setFullName(request.getFullName());
         if (request.getEmail() != null) user.setEmail(request.getEmail());
         if (request.getBio() != null) user.setBio(request.getBio());
