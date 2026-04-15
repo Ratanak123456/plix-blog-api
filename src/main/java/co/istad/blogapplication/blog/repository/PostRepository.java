@@ -43,5 +43,7 @@ public interface PostRepository extends JpaRepository<Post, UUID> {
     @Query("SELECT p FROM Post p LEFT JOIN p.likes l WHERE p.status = 'PUBLISHED' GROUP BY p ORDER BY COUNT(l) DESC")
     Page<Post> findMostLiked(Pageable pageable);
 
+    long countByCategoryIdAndStatusAndDeletedAtIsNull(UUID categoryId, PostStatus status);
+
     long countByAuthor(User author);
 }

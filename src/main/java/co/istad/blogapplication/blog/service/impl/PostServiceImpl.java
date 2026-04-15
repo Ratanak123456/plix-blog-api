@@ -197,9 +197,9 @@ public class PostServiceImpl implements PostService {
     private PostResponse mapToResponse(Post post, String currentUsername) {
         PostResponse response = modelMapper.map(post, PostResponse.class);
 
-        // Use persisted counters from the post record.
+        // Read live counts so the API is correct even if persisted counters drift.
         response.setLikeCount(post.getLikeCount());
-        response.setCommentCount(post.getCommentCount());
+        response.setCommentCount(Math.toIntExact(commentRepository.countByPostAndDeletedAtIsNull(post)));
         response.setViewCount(post.getViewCount());
         response.setBookmarkCount(post.getBookmarkCount());
 

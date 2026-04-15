@@ -3,10 +3,12 @@ package co.istad.blogapplication.blog.service.impl;
 import co.istad.blogapplication.blog.dto.request.CategoryRequest;
 import co.istad.blogapplication.blog.dto.response.CategoryResponse;
 import co.istad.blogapplication.blog.entity.Category;
+import co.istad.blogapplication.blog.entity.Post;
 import co.istad.blogapplication.blog.exception.BadRequestException;
 import co.istad.blogapplication.blog.exception.ConflictException;
 import co.istad.blogapplication.blog.exception.NotFoundException;
 import co.istad.blogapplication.blog.repository.CategoryRepository;
+import co.istad.blogapplication.blog.repository.PostRepository;
 import co.istad.blogapplication.blog.service.CategoryService;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
@@ -24,6 +26,7 @@ import java.util.stream.Collectors;
 public class CategoryServiceImpl implements CategoryService {
 
     private final CategoryRepository categoryRepository;
+    private final PostRepository postRepository;
     private final ModelMapper modelMapper;
 
     @Override
@@ -47,7 +50,7 @@ public class CategoryServiceImpl implements CategoryService {
                 .description(request.getDescription())
                 .build();
 
-        return modelMapper.map(categoryRepository.save(category), CategoryResponse.class);
+        return mapToResponse(categoryRepository.save(category));
     }
 
     @Override
@@ -73,7 +76,7 @@ public class CategoryServiceImpl implements CategoryService {
         category.setSlug(slug);
         category.setDescription(request.getDescription());
 
-        return modelMapper.map(categoryRepository.save(category), CategoryResponse.class);
+        return mapToResponse(categoryRepository.save(category));
     }
 
     @Override
@@ -87,15 +90,24 @@ public class CategoryServiceImpl implements CategoryService {
     @Override
     public List<CategoryResponse> getAllCategories() {
         return categoryRepository.findAll().stream()
-                .map(c -> modelMapper.map(c, CategoryResponse.class))
+                .map(this::mapToResponse)
                 .collect(Collectors.toList());
     }
 
     @Override
     public CategoryResponse getCategoryById(UUID id) {
         return categoryRepository.findById(id)
-                .map(c -> modelMapper.map(c, CategoryResponse.class))
+                .map(this::mapToResponse)
                 .orElseThrow(() -> new NotFoundException("Category not found"));
+    }
+
+    private CategoryResponse mapToResponse(Category category) {
+        CategoryResponse response = modelMapper.map(category, CategoryResponse.class);
+        response.setPostCount(postRepository.countByCategoryIdAndStatusAndDeletedAtIsNull(
+                category.getId(),
+                Post.PostStatus.PUBLISHED
+        ));
+        return response;
     }
 
     private String toSlug(String input) {
