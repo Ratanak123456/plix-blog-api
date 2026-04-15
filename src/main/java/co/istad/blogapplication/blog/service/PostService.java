@@ -18,4 +18,5 @@ public interface PostService {
     Page<PostResponse> getPostsByCategory(UUID categoryId, Pageable pageable);
     Page<PostResponse> getPostsByTag(UUID tagId, Pageable pageable);
     Page<PostResponse> getMostLikedPosts(Pageable pageable);
+    Page<PostResponse> getMostViewedPosts(Pageable pageable);
 }

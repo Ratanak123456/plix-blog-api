@@ -160,6 +160,12 @@ public class PostServiceImpl implements PostService {
                 .map(post -> mapToResponse(post, null));
     }
 
+    @Override
+    public Page<PostResponse> getMostViewedPosts(Pageable pageable) {
+        return postRepository.findMostViewed(pageable)
+                .map(post -> mapToResponse(post, null));
+    }
+
     private User getUserByUsername(String username) {
         return userRepository.findByUsernameAndIsDeletedFalse(username)
                 .orElseThrow(() -> new NotFoundException("User not found"));

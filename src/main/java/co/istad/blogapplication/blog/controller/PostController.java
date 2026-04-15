@@ -78,6 +78,13 @@ public class PostController {
         return ResponseEntity.ok(postService.getMostLikedPosts(pageable));
     }
 
+    // GET most viewed
+    @GetMapping("/most-viewed")
+    public ResponseEntity<Page<PostResponse>> getMostViewedPosts(
+            @PageableDefault(size = 10) Pageable pageable) {
+        return ResponseEntity.ok(postService.getMostViewedPosts(pageable));
+    }
+
     // GET by category
     @GetMapping("/category/{categoryId}")
     public ResponseEntity<Page<PostResponse>> getPostsByCategory(
