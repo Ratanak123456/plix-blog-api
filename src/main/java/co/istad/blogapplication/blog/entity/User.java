@@ -37,10 +37,10 @@ public class User {
 
     private String bio;
 
-    @Column(name = "profile_image_url")
+    @Column(name = "profile_image_url", columnDefinition = "TEXT")
     private String profileImage;
 
-    @Column(name = "cover_image_url")
+    @Column(name = "cover_image_url", columnDefinition = "TEXT")
     private String coverImage;
 
     @Enumerated(EnumType.STRING)

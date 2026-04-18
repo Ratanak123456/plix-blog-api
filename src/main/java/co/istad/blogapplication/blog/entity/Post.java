@@ -29,7 +29,7 @@ public class Post {
     @Column(nullable = false, unique = true)
     private String slug;
 
-    @Column(name = "thumbnail_url")
+    @Column(name = "thumbnail_url", columnDefinition = "TEXT")
     private String thumbnailUrl;
 
     @Column(columnDefinition = "TEXT", nullable = false)
