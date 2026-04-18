@@ -58,7 +58,8 @@ public class ProfileController {
     @GetMapping("/profiles/{username}/posts")
     public ResponseEntity<Page<PostResponse>> getUserPosts(
             @PathVariable String username,
+            @RequestParam(required = false) co.istad.blogapplication.blog.entity.Post.PostStatus status,
             @PageableDefault(size = 10) Pageable pageable) {
-        return ResponseEntity.ok(profileService.getUserPosts(username, pageable));
+        return ResponseEntity.ok(profileService.getUserPosts(username, status, pageable));
     }
 }

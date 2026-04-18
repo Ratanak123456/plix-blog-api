@@ -84,10 +84,10 @@ public class ProfileServiceImpl implements ProfileService {
     }
 
     @Override
-    public Page<PostResponse> getUserPosts(String username, Pageable pageable) {
+    public Page<PostResponse> getUserPosts(String username, Post.PostStatus status, Pageable pageable) {
         User user = userRepository.findByUsernameAndIsDeletedFalse(username)
                 .orElseThrow(() -> new NotFoundException("User not found"));
-        return postService.getMyPosts(username, pageable);
+        return postService.getMyPosts(username, status, pageable);
     }
 
     private User findUserByUsername(String username) {

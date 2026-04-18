@@ -14,7 +14,7 @@ public interface PostService {
     PostResponse getPostBySlug(String slug);
     PostResponse getPostById(UUID id);
     Page<PostResponse> getAllPublishedPosts(Pageable pageable);
-    Page<PostResponse> getMyPosts(String username, Pageable pageable);
+    Page<PostResponse> getMyPosts(String username, Post.PostStatus status, Pageable pageable);
     Page<PostResponse> getPostsByCategory(UUID categoryId, Pageable pageable);
     Page<PostResponse> getPostsByTag(UUID tagId, Pageable pageable);
     Page<PostResponse> getMostLikedPosts(Pageable pageable);

@@ -4,6 +4,7 @@ import co.istad.blogapplication.blog.dto.request.PasswordRequest;
 import co.istad.blogapplication.blog.dto.request.ProfileRequest;
 import co.istad.blogapplication.blog.dto.response.PostResponse;
 import co.istad.blogapplication.blog.dto.response.UserResponse;
+import co.istad.blogapplication.blog.entity.Post;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -14,5 +15,5 @@ public interface ProfileService {
     void changePassword(String username, PasswordRequest request);
     Page<PostResponse> getMyBookmarks(String username, Pageable pageable);
     UserResponse getUserByUsername(String username);
-    Page<PostResponse> getUserPosts(String username, Pageable pageable);
+    Page<PostResponse> getUserPosts(String username, Post.PostStatus status, Pageable pageable);
 }

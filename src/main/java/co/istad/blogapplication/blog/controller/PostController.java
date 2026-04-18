@@ -67,8 +67,9 @@ public class PostController {
     @GetMapping("/my-posts")
     public ResponseEntity<Page<PostResponse>> getMyPosts(
             @AuthenticationPrincipal UserDetails userDetails,
+            @RequestParam(required = false) co.istad.blogapplication.blog.entity.Post.PostStatus status,
             @PageableDefault(size = 10) Pageable pageable) {
-        return ResponseEntity.ok(postService.getMyPosts(userDetails.getUsername(), pageable));
+        return ResponseEntity.ok(postService.getMyPosts(userDetails.getUsername(), status, pageable));
     }
 
     // GET most liked
