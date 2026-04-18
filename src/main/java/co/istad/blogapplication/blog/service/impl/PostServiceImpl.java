@@ -131,18 +131,14 @@ public class PostServiceImpl implements PostService {
 
     @Override
     public Page<PostResponse> getAllPublishedPosts(Pageable pageable) {
-        return postRepository.findByStatusAndDeletedAtIsNull(PostStatus.PUBLISHED, pageable)
+        return postRepository.findByStatus(PostStatus.PUBLISHED, pageable)
                 .map(post -> mapToResponse(post, null));
     }
 
     @Override
-    public Page<PostResponse> getMyPosts(String username, PostStatus status, Pageable pageable) {
+    public Page<PostResponse> getMyPosts(String username, Pageable pageable) {
         User user = getUserByUsername(username);
-        if (status != null) {
-            return postRepository.findByAuthorAndStatusAndDeletedAtIsNull(user, status, pageable)
-                    .map(post -> mapToResponse(post, username));
-        }
-        return postRepository.findByAuthorAndDeletedAtIsNull(user, pageable)
+        return postRepository.findByAuthor(user, pageable)
                 .map(post -> mapToResponse(post, username));
     }
 

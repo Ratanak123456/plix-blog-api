@@ -23,11 +23,11 @@ public interface PostRepository extends JpaRepository<Post, UUID> {
     @Query("UPDATE Post p SET p.viewCount = p.viewCount + 1 WHERE p.slug = :slug")
     int incrementViewCountBySlug(@Param("slug") String slug);
 
-    Page<Post> findByStatusAndDeletedAtIsNull(PostStatus status, Pageable pageable);
+    Page<Post> findByStatus(PostStatus status, Pageable pageable);
 
-    Page<Post> findByAuthorAndStatusAndDeletedAtIsNull(User author, PostStatus status, Pageable pageable);
+    Page<Post> findByAuthorAndStatus(User author, PostStatus status, Pageable pageable);
 
-    Page<Post> findByAuthorAndDeletedAtIsNull(User author, Pageable pageable);
+    Page<Post> findByAuthor(User author, Pageable pageable);
 
     @Query("SELECT p FROM Post p WHERE p.status = 'PUBLISHED' AND " +
             "(LOWER(p.title) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
