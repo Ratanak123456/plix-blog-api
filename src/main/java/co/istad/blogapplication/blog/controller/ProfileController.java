@@ -3,6 +3,7 @@ package co.istad.blogapplication.blog.controller;
 import co.istad.blogapplication.blog.dto.request.PasswordRequest;
 import co.istad.blogapplication.blog.dto.request.ProfileRequest;
 import co.istad.blogapplication.blog.dto.response.PostResponse;
+import co.istad.blogapplication.blog.dto.response.ApiResponse;
 import co.istad.blogapplication.blog.dto.response.UserResponse;
 import co.istad.blogapplication.blog.service.ProfileService;
 import jakarta.validation.Valid;
@@ -36,11 +37,11 @@ public class ProfileController {
     }
 
     @PatchMapping("/profile/change-password")
-    public ResponseEntity<String> changePassword(
+    public ResponseEntity<ApiResponse> changePassword(
             @Valid @RequestBody PasswordRequest request,
             @AuthenticationPrincipal UserDetails userDetails) {
         profileService.changePassword(userDetails.getUsername(), request);
-        return ResponseEntity.ok("Password changed successfully");
+        return ResponseEntity.ok(new ApiResponse("Password changed successfully"));
     }
 
     @GetMapping("/profile/bookmarks")
