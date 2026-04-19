@@ -1,98 +1,81 @@
-# Blog Application API 🚀
+# PlixBlog API 🚀
 
-A robust and scalable RESTful API built with Spring Boot 4 for the PlixBlog platform. This backend handles user authentication, post management, engagement tracking, and more.
+A robust RESTful API built with Spring Boot for the PlixBlog platform.
+
+## 🔗 Live Deployment
+
+**Base URL:** https://plix-blog-api.onrender.com/api/v1
 
 ## 🛠 Tech Stack
 
-- **Framework:** [Spring Boot 4.0.5](https://spring.io/projects/spring-boot)
-- **Language:** [Java 21](https://www.oracle.com/java/technologies/downloads/#java21)
-- **Database:** [PostgreSQL](https://www.postgresql.org/)
-- **Migration:** [Flyway](https://flywaydb.org/)
-- **Security:** [Spring Security](https://spring.io/projects/spring-security) with JWT (JSON Web Tokens)
-- **Data Access:** Spring Data JPA (Hibernate)
-- **Documentation:** Postman Collection included
-- **Monitoring:** [Spring Boot Actuator](https://docs.spring.io/spring-boot/reference/actuator/index.html)
-- **Mapping:** [ModelMapper](http://modelmapper.org/)
-- **Utilities:** [Lombok](https://projectlombok.org/)
+- **Framework:** Spring Boot 4.0.5
+- **Language:** Java 21
+- **Database:** PostgreSQL
+- **Migration:** Flyway
+- **Security:** Spring Security with JWT
+- **ORM:** Spring Data JPA (Hibernate)
 
 ## 🏗 Features
 
-- **JWT Authentication:** Secure login and registration with token-based access control.
-- **Post Management:** Full CRUD operations for blog posts with slugs and categories.
-- **User Profiles:** Manage user information and author-specific data.
-- **Email Service:** Integrated mail support for notifications and account actions.
-- **Database Migrations:** Versioned schema changes managed by Flyway.
-- **Optimized Storage:** Enhanced image URL storage using `TEXT` columns to support long CDN and social media links.
-- **Security:** CSRF protection, CORS configuration, and password hashing.
-- **Health Checks:** Probes and health endpoints via Actuator.
+- JWT Authentication (Login/Register)
+- User Profile Management
+- Post CRUD (Create, Read, Update, Delete)
+- Categories & Tags Management
+- Like, Bookmark, Comment System
+- Email Notifications
 
-## 🚀 Getting Started
+## 📮 API Endpoints
 
-### Prerequisites
+### Auth
+- `POST /api/v1/auth/register` - Register new user
+- `POST /api/v1/auth/login` - Login
+- `POST /api/v1/auth/refresh` - Refresh token
 
-- JDK 21
-- PostgreSQL
-- Gradle (provided via `./gradlew`)
+### Profile
+- `GET /api/v1/profile` - Get current user profile
+- `PUT /api/v1/profile` - Update profile
+- `PATCH /api/v1/profile/change-password` - Change password
+- `GET /api/v1/profile/bookmarks` - Get user bookmarks
 
-### Configuration
+### Posts
+- `GET /api/v1/posts` - List all posts
+- `GET /api/v1/posts/{slug}` - Get post by slug
+- `POST /api/v1/posts` - Create post
+- `PUT /api/v1/posts/{id}` - Update post
+- `DELETE /api/v1/posts/{id}` - Delete post
+- `PATCH /api/v1/posts/{id}/like` - Toggle like
+- `PATCH /api/v1/posts/{id}/bookmark` - Toggle bookmark
 
-The application uses profiles (`dev`, `prod`). Configuration is managed via `application.yaml` and environment variables.
+### Categories & Tags
+- `GET /api/v1/categories` - List categories
+- `GET /api/v1/tags` - List tags
+- `POST /api/v1/tags` - Create tag
 
-#### Required Environment Variables
+### Comments
+- `GET /api/v1/comments/post/{postId}` - Get post comments
+- `POST /api/v1/comments` - Create comment
+- `DELETE /api/v1/comments/{id}` - Delete comment
 
-| Variable | Description | Default (Dev) |
-| :--- | :--- | :--- |
-| `DB_URL` | PostgreSQL connection URL | `jdbc:postgresql://...` |
-| `DB_USERNAME` | Database username | `blog_alqc_user` |
-| `DB_PASSWORD` | Database password | `********` |
-| `JWT_SECRET` | Base64 encoded secret for JWT | Provided in `dev` |
-| `FRONTEND_URL` | Allowed CORS origins | `http://localhost:3000` |
-
-### Running Locally
-
-1. **Clone the repository:**
-   ```bash
-   git clone <repository-url>
-   cd blogs-api
-   ```
-
-2. **Configure the database:**
-   Ensure PostgreSQL is running and update the `DB_URL` in your environment or `application-dev.yaml`.
-
-3. **Run the application:**
-   ```bash
-   ./gradlew bootRun
-   ```
-   The API will be available at `http://localhost:8080`.
-
-### Building for Production
-
-Build an executable JAR:
-```bash
-./gradlew build -x test
-```
-The JAR will be located in `build/libs/`.
-
-## 🐳 Docker Support
-
-Build and run using the provided `Dockerfile`:
+## 🐳 Docker
 
 ```bash
 docker build -t blogs-api .
-docker run -p 8080:8080 --env-file .env blogs-api
+docker run -p 8080:8080 blogs-api
 ```
 
-## 🧪 Testing
+## 🧪 Running Locally
 
-Run the test suite:
 ```bash
-./gradlew test
+cd blogs-api
+./gradlew bootRun
 ```
 
-## 📮 API Documentation
+API runs at `http://localhost:8080`
 
-A Postman collection is available in the root directory: `blog-application-api.postman_collection.json`. Import it into Postman to explore and test the endpoints.
+## 📮 Postman Collection
+
+Import `blog-application-api.postman_collection.json` to test all endpoints.
 
 ---
 
-Built for the **PlixBlog** ecosystem.
+Built with ❤️ for PlixBlog
