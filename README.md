@@ -22,6 +22,7 @@ A robust and scalable RESTful API built with Spring Boot 4 for the PlixBlog plat
 - **User Profiles:** Manage user information and author-specific data.
 - **Email Service:** Integrated mail support for notifications and account actions.
 - **Database Migrations:** Versioned schema changes managed by Flyway.
+- **Optimized Storage:** Enhanced image URL storage using `TEXT` columns to support long CDN and social media links.
 - **Security:** CSRF protection, CORS configuration, and password hashing.
 - **Health Checks:** Probes and health endpoints via Actuator.
 

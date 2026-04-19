@@ -6,6 +6,7 @@ import co.istad.blogapplication.blog.dto.request.RegisterRequest;
 import co.istad.blogapplication.blog.dto.response.AuthResponse;
 import co.istad.blogapplication.blog.entity.RefreshToken;
 import co.istad.blogapplication.blog.entity.User;
+import co.istad.blogapplication.blog.exception.UnauthorizedException;
 import co.istad.blogapplication.blog.repository.RefreshTokenRepository;
 import co.istad.blogapplication.blog.repository.UserRepository;
 import co.istad.blogapplication.blog.security.JwtService;
@@ -25,6 +26,7 @@ import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
@@ -124,32 +126,13 @@ class AuthServiceImplTest {
     }
 
     @Test
-    void loginFallsBackToEmailIdentifier() {
+    void loginFailsForEmailIdentifier() {
         LoginRequest request = new LoginRequest();
         request.setIdentifier("verified@example.com");
         request.setPassword("password123");
 
-        User user = User.builder()
-                .id(UUID.randomUUID())
-                .username("verified")
-                .fullName("Verified User")
-                .email("verified@example.com")
-                .passwordHash(passwordEncoder.encode("password123"))
-                .isActive(true)
-                .isDeleted(false)
-                .role(User.Role.AUTHOR)
-                .build();
-
         when(userRepository.findByUsernameAndIsDeletedFalse("verified@example.com")).thenReturn(Optional.empty());
-        when(userRepository.findAllByEmail("verified@example.com")).thenReturn(List.of(user));
-        when(jwtService.generateAccessToken(user)).thenReturn("access-token");
-        when(jwtService.generateRefreshToken(user)).thenReturn("refresh-token");
-        when(jwtService.hashToken("refresh-token")).thenReturn("refresh-hash");
-        when(refreshTokenRepository.save(any(RefreshToken.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        AuthResponse response = authService.login(request);
-
-        assertEquals("access-token", response.getAccessToken());
-        assertEquals("verified@example.com", response.getUser().getEmail());
+        assertThrows(UnauthorizedException.class, () -> authService.login(request));
     }
 }
