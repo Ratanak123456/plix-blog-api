@@ -89,10 +89,10 @@ public class AuthServiceImpl implements AuthService {
         String identifier = request.getIdentifier().trim();
 
         User user = userRepository.findByUsernameAndIsDeletedFalse(identifier)
-                .orElseThrow(() -> new UnauthorizedException("Invalid username or password"));
+                .orElseThrow(() -> new UnauthorizedException("Incorrect username or password"));
 
         if (!passwordEncoder.matches(request.getPassword(), user.getPasswordHash())) {
-            throw new UnauthorizedException("Invalid username or password");
+            throw new UnauthorizedException("Incorrect username or password");
         }
         if (!user.isActive()) {
             throw new UnauthorizedException("Account is disabled");

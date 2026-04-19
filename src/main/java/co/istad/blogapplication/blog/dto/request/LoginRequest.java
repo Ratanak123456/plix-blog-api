@@ -8,7 +8,7 @@ import lombok.Data;
 public class LoginRequest {
 
     @NotBlank(message = "Username is required")
-    @Pattern(regexp = "^[^@]+$", message = "Emails are not allowed for login. Please use your username.")
+    @Pattern(regexp = "^[^@]+$", message = "Use your username, not your email, to login.")
     private String identifier;
 
     @NotBlank(message = "Password is required")
