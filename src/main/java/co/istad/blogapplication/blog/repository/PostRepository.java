@@ -46,7 +46,7 @@ public interface PostRepository extends JpaRepository<Post, UUID> {
     @Query("SELECT p FROM Post p WHERE p.status = 'PUBLISHED' ORDER BY p.viewCount DESC")
     Page<Post> findMostViewed(Pageable pageable);
 
-    long countByCategoryIdAndStatusAndDeletedAtIsNull(UUID categoryId, PostStatus status);
+    long countByCategoryIdAndStatus(UUID categoryId, PostStatus status);
 
     long countByAuthor(User author);
 }

@@ -103,7 +103,7 @@ public class CategoryServiceImpl implements CategoryService {
 
     private CategoryResponse mapToResponse(Category category) {
         CategoryResponse response = modelMapper.map(category, CategoryResponse.class);
-        response.setPostCount(postRepository.countByCategoryIdAndStatusAndDeletedAtIsNull(
+        response.setPostCount(postRepository.countByCategoryIdAndStatus(
                 category.getId(),
                 Post.PostStatus.PUBLISHED
         ));

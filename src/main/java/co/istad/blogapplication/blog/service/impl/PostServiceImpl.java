@@ -106,8 +106,7 @@ public class PostServiceImpl implements PostService {
     @Transactional
     public void deletePost(UUID id, String username) {
         Post post = getPostAndVerifyOwner(id, username);
-        post.setDeletedAt(LocalDateTime.now());
-        postRepository.save(post);
+        postRepository.delete(post);
     }
 
     @Override
