@@ -15,6 +15,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.util.UUID;
 
 @Component
 @RequiredArgsConstructor
@@ -39,10 +40,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         try {
             jwtService.validateAccessToken(token);
-            String username = jwtService.extractUsername(token);
+            String subject = jwtService.extractSubject(token);
 
             if (SecurityContextHolder.getContext().getAuthentication() == null) {
-                UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+                UserDetails userDetails = loadUserDetails(subject);
                 UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
                         userDetails,
                         null,
@@ -56,5 +57,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
 
         filterChain.doFilter(request, response);
+    }
+
+    private UserDetails loadUserDetails(String subject) {
+        try {
+            return userDetailsService.loadUserById(UUID.fromString(subject));
+        } catch (IllegalArgumentException exception) {
+            // Support older username-based tokens until they expire naturally.
+            return userDetailsService.loadUserByUsername(subject);
+        }
     }
 }

@@ -11,12 +11,12 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import javax.crypto.SecretKey;
-import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.time.Instant;
 import java.util.Date;
 import java.util.Map;
+import java.util.UUID;
 
 @Service
 public class JwtService {
@@ -38,15 +38,23 @@ public class JwtService {
     }
 
     public String generateAccessToken(User user) {
-        return generateToken(user.getUsername(), user, accessTokenExpiration, "access");
+        return generateToken(user.getId().toString(), user, accessTokenExpiration, "access");
     }
 
     public String generateRefreshToken(User user) {
-        return generateToken(user.getUsername(), user, refreshTokenExpiration, "refresh");
+        return generateToken(user.getId().toString(), user, refreshTokenExpiration, "refresh");
     }
 
-    public String extractUsername(String token) {
+    public String extractSubject(String token) {
         return parseClaims(token).getSubject();
+    }
+
+    public UUID extractUserId(String token) {
+        try {
+            return UUID.fromString(extractSubject(token));
+        } catch (IllegalArgumentException exception) {
+            throw new UnauthorizedException("Invalid token subject");
+        }
     }
 
     public void validateAccessToken(String token) {

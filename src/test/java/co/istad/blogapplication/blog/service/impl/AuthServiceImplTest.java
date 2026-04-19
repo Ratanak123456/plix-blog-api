@@ -135,4 +135,71 @@ class AuthServiceImplTest {
 
         assertThrows(UnauthorizedException.class, () -> authService.login(request));
     }
+
+    @Test
+    void refreshTokenUsesUserIdSubjectForCurrentTokens() {
+        UUID userId = UUID.randomUUID();
+        User user = User.builder()
+                .id(userId)
+                .username("verified")
+                .fullName("Verified User")
+                .email("verified@example.com")
+                .passwordHash(passwordEncoder.encode("password123"))
+                .isActive(true)
+                .isDeleted(false)
+                .role(User.Role.AUTHOR)
+                .build();
+
+        RefreshToken storedToken = RefreshToken.builder()
+                .tokenHash("refresh-hash")
+                .expiresAt(java.time.LocalDateTime.now().plusHours(1))
+                .build();
+
+        when(jwtService.extractSubject("refresh-token")).thenReturn(userId.toString());
+        when(userRepository.findByIdAndIsDeletedFalse(userId)).thenReturn(Optional.of(user));
+        when(jwtService.hashToken("refresh-token")).thenReturn("refresh-hash");
+        when(refreshTokenRepository.findByTokenHash("refresh-hash")).thenReturn(Optional.of(storedToken));
+        when(refreshTokenRepository.save(any(RefreshToken.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(jwtService.generateAccessToken(user)).thenReturn("new-access-token");
+        when(jwtService.generateRefreshToken(user)).thenReturn("new-refresh-token");
+        when(jwtService.hashToken("new-refresh-token")).thenReturn("new-refresh-hash");
+
+        AuthResponse response = authService.refreshToken("refresh-token");
+
+        assertEquals("new-access-token", response.getAccessToken());
+        assertEquals("new-refresh-token", response.getRefreshToken());
+    }
+
+    @Test
+    void refreshTokenFallsBackToUsernameSubjectForLegacyTokens() {
+        User user = User.builder()
+                .id(UUID.randomUUID())
+                .username("verified")
+                .fullName("Verified User")
+                .email("verified@example.com")
+                .passwordHash(passwordEncoder.encode("password123"))
+                .isActive(true)
+                .isDeleted(false)
+                .role(User.Role.AUTHOR)
+                .build();
+
+        RefreshToken storedToken = RefreshToken.builder()
+                .tokenHash("refresh-hash")
+                .expiresAt(java.time.LocalDateTime.now().plusHours(1))
+                .build();
+
+        when(jwtService.extractSubject("refresh-token")).thenReturn("verified");
+        when(userRepository.findByUsernameAndIsDeletedFalse("verified")).thenReturn(Optional.of(user));
+        when(jwtService.hashToken("refresh-token")).thenReturn("refresh-hash");
+        when(refreshTokenRepository.findByTokenHash("refresh-hash")).thenReturn(Optional.of(storedToken));
+        when(refreshTokenRepository.save(any(RefreshToken.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(jwtService.generateAccessToken(user)).thenReturn("new-access-token");
+        when(jwtService.generateRefreshToken(user)).thenReturn("new-refresh-token");
+        when(jwtService.hashToken("new-refresh-token")).thenReturn("new-refresh-hash");
+
+        AuthResponse response = authService.refreshToken("refresh-token");
+
+        assertEquals("new-access-token", response.getAccessToken());
+        assertEquals("new-refresh-token", response.getRefreshToken());
+    }
 }

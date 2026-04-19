@@ -25,6 +25,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -110,9 +111,7 @@ public class AuthServiceImpl implements AuthService {
 
         jwtService.validateRefreshToken(refreshToken);
 
-        String username = jwtService.extractUsername(refreshToken);
-        User user = userRepository.findByUsernameAndIsDeletedFalse(username)
-                .orElseThrow(() -> new NotFoundException("User not found"));
+        User user = findUserFromTokenSubject(jwtService.extractSubject(refreshToken));
 
         String tokenHash = jwtService.hashToken(refreshToken);
         RefreshToken storedToken = refreshTokenRepository.findByTokenHash(tokenHash)
@@ -144,5 +143,17 @@ public class AuthServiceImpl implements AuthService {
                 .refreshToken(refreshToken)
                 .user(modelMapper.map(user, UserResponse.class))
                 .build();
+    }
+
+    private User findUserFromTokenSubject(String subject) {
+        try {
+            UUID userId = UUID.fromString(subject);
+            return userRepository.findByIdAndIsDeletedFalse(userId)
+                    .orElseThrow(() -> new NotFoundException("User not found"));
+        } catch (IllegalArgumentException exception) {
+            // Support older username-based refresh tokens until they expire naturally.
+            return userRepository.findByUsernameAndIsDeletedFalse(subject)
+                    .orElseThrow(() -> new NotFoundException("User not found"));
+        }
     }
 }
