@@ -2,9 +2,10 @@
 
 A robust RESTful API built with Spring Boot for the PlixBlog platform.
 
-## 🔗 Live Deployment
+## 🔗 Live Deployment & EDR
 
 **Base URL:** https://plix-blog-api.onrender.com/api/v1
+**ERD:** https://plix-blog-api.onrender.com/api/v1
 
 ## 🛠 Tech Stack
 
@@ -22,7 +23,6 @@ A robust RESTful API built with Spring Boot for the PlixBlog platform.
 - Post CRUD (Create, Read, Update, Delete)
 - Categories & Tags Management
 - Like, Bookmark, Comment System
-- Email Notifications
 
 ## 📮 API Endpoints
 
